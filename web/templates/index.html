@@ -27,21 +27,21 @@
 
         <div class="controls">
           <fieldset>
-            <legend>Rendering mode</legend>
+            <legend>Rendering mode <span class="help-tip" data-tooltip="Choose template engine semantics. Base is pure Jinja2. Ansible and Salt use their respective runtimes for compatibility.">?</span></legend>
             <label><input type="radio" name="render_mode" value="base" checked /> Base Jinja2</label>
             <label><input type="radio" name="render_mode" value="ansible" /> Ansible</label>
             <label><input type="radio" name="render_mode" value="salt" /> Salt</label>
           </fieldset>
 
           <fieldset>
-            <legend>Rendering options</legend>
+            <legend>Rendering options <span class="help-tip" data-tooltip="Trim removes the first newline after Jinja blocks. Lstrip strips leading whitespace before block tags. Strict check errors on undefined variables.">?</span></legend>
             <label><input type="checkbox" id="opt_trim" /> Trim</label>
             <label><input type="checkbox" id="opt_lstrip" /> Lstrip</label>
             <label><input type="checkbox" id="opt_strict" /> Strict check</label>
           </fieldset>
 
           <fieldset>
-            <legend>Additional filters</legend>
+            <legend>Additional filters <span class="help-tip" data-tooltip="Enable extra filters for this render only. hash(value, algo) computes digests. ipaddr parses addresses/prefixes.">?</span></legend>
             <label><input type="checkbox" class="add_filters" id="filter_hash" /> hash</label>
             <label><input type="checkbox" class="add_filters" id="filter_ipaddr" /> ipaddr</label>
           </fieldset>
@@ -51,7 +51,7 @@
       <section class="panel panel-right">
         <div class="panel-head">
           <label for="render_results">Rendered Template</label>
-          <label class="show-ws"><input type="checkbox" id="toggle_whitespaces" /> Show whitespaces</label>
+          <label class="show-ws"><input type="checkbox" id="toggle_whitespaces" /> Show whitespaces <span class="help-tip" data-tooltip="Visualizes spaces, tabs, and newlines in the rendered output.">?</span></label>
         </div>
 
         <pre id="render_results"></pre>
