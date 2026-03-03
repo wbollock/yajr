@@ -78,6 +78,11 @@ body {
   max-width: 780px;
 }
 
+.runtime-meta {
+  margin-top: 6px;
+  font-size: 0.86rem;
+}
+
 .workspace {
   display: grid;
   gap: 16px;

@@ -1,3 +1,4 @@
+import importlib.metadata
 import os
 from dataclasses import asdict
 from pathlib import Path
@@ -11,7 +12,7 @@ from pydantic import BaseModel, Field
 
 from jinja_parser.core.models import RenderRequest
 from jinja_parser.core.renderer import RenderEngine
-from jinja_parser.core.share import ShareCodec
+from jinja_parser.core.share_store import ShareStore
 
 
 class RenderPayload(BaseModel):
@@ -31,15 +32,24 @@ class RenderPayload(BaseModel):
         )
 
 
+def _runtime_version(pkg_name: str) -> str:
+    try:
+        return importlib.metadata.version(pkg_name)
+    except importlib.metadata.PackageNotFoundError:
+        return "not installed"
+
+
 def create_app(secret: Optional[str] = None) -> FastAPI:
-    app = FastAPI(title="Jinja Parser")
+    app = FastAPI(title="YAJR")
     engine = RenderEngine()
-    codec = ShareCodec(secret=secret or os.environ.get("JINJA_SHARE_SECRET", "dev-secret"))
+    share_store = ShareStore()
     root = Path(__file__).resolve().parents[3]
     static_dir = root / "web" / "static"
     template_dir = root / "web" / "templates"
     templates = Jinja2Templates(directory=str(template_dir))
-    asset_version = str(int((static_dir / "css" / "site.css").stat().st_mtime)) if static_dir.exists() else "1"
+    asset_version = (
+        str(int((static_dir / "css" / "site.css").stat().st_mtime)) if static_dir.exists() else "1"
+    )
     if static_dir.exists():
         app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
@@ -57,39 +67,33 @@ def create_app(secret: Optional[str] = None) -> FastAPI:
 
     @app.post("/api/share")
     def share(payload: RenderPayload, request: Request) -> Dict[str, str]:
-        token = codec.encode(payload.to_request())
+        token = share_store.create(payload.to_request())
         base = str(request.base_url).rstrip("/")
         return {"token": token, "share_url": f"{base}/s/{token}"}
 
     @app.get("/api/share/{token}")
     def get_share(token: str) -> Dict[str, object]:
-        try:
-            parsed = codec.decode(token)
-        except ValueError as exc:
-            raise HTTPException(status_code=400, detail=str(exc)) from exc
-        return asdict(parsed)
+        payload = share_store.get(token)
+        if payload is None:
+            raise HTTPException(status_code=404, detail="Share link not found.")
+        return payload
+
+    def _base_context(request: Request, initial_token: str) -> Dict[str, object]:
+        return {
+            "request": request,
+            "initial_token": initial_token,
+            "asset_version": asset_version,
+            "ansible_version": _runtime_version("ansible-core"),
+            "salt_version": _runtime_version("salt"),
+        }
 
     @app.get("/", response_class=HTMLResponse)
     def index(request: Request):
-        return templates.TemplateResponse(
-            "index.html",
-            {
-                "request": request,
-                "initial_token": "",
-                "asset_version": asset_version,
-            },
-        )
+        return templates.TemplateResponse(request, "index.html", _base_context(request, ""))
 
     @app.get("/s/{token}", response_class=HTMLResponse)
     def shared_page(request: Request, token: str):
-        return templates.TemplateResponse(
-            "index.html",
-            {
-                "request": request,
-                "initial_token": token,
-                "asset_version": asset_version,
-            },
-        )
+        return templates.TemplateResponse(request, "index.html", _base_context(request, token))
 
     return app
 

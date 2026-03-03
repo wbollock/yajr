@@ -20,7 +20,7 @@ def test_render_endpoint_works():
     assert response.json()["render_result"] == "hello world"
 
 
-def test_share_endpoint_roundtrip_without_db():
+def test_share_endpoint_roundtrip_short_slug():
     client = TestClient(create_app(secret="test-secret"))
     payload = {
         "template": "{{ x }}",
@@ -34,6 +34,16 @@ def test_share_endpoint_roundtrip_without_db():
     assert share_response.status_code == 200
     token = share_response.json()["token"]
 
+    assert len(token) <= 10
+    assert share_response.json()["share_url"].endswith(f"/s/{token}")
+
     view_response = client.get(f"/api/share/{token}")
     assert view_response.status_code == 200
     assert view_response.json() == payload
+
+
+def test_index_contains_runtime_versions_label():
+    client = TestClient(create_app(secret="test-secret"))
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "Runtime support" in response.text

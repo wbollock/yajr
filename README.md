@@ -2,7 +2,7 @@
 
 Secure YAJR (Yet Another Jinja Renderer) with:
 - Shared rendering core for CLI and web
-- Stateless share links (signed + compressed token)
+- Short share links with server-side slug storage
 - TDD-backed behavior
 
 ## Quick start
@@ -30,8 +30,8 @@ jinja-render --mode base --template-file template.j2 --data-file data.yml
 
 ## Security notes
 - Base rendering uses `jinja2.sandbox.SandboxedEnvironment`.
-- Template/share payloads are not persisted in a database.
-- Share links are self-contained tokens signed with `JINJA_SHARE_SECRET`.
+- Share links are compact slugs stored in app memory.
+- Configure `JINJA_SHARE_SECRET` in deployment for other security-sensitive settings.
 
 ## Status
 - Base Jinja mode: implemented.

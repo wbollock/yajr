@@ -4,6 +4,8 @@
 #
 #    pip-compile --extra=ansible --extra=dev --extra=salt --output-file=requirements.lock.txt pyproject.toml
 #
+annotated-doc==0.0.4
+    # via fastapi
 annotated-types==0.7.0
     # via pydantic
 ansible-core==2.15.13
@@ -26,7 +28,7 @@ exceptiongroup==1.3.1
     # via
     #   anyio
     #   pytest
-fastapi==0.115.14
+fastapi==0.128.8
     # via jinja-parser (pyproject.toml)
 greenlet==3.2.5
     # via playwright
@@ -50,6 +52,8 @@ jinja2==3.1.6
     # via
     #   ansible-core
     #   jinja-parser (pyproject.toml)
+looseversion==1.3.0
+    # via jinja-parser (pyproject.toml)
 markupsafe==3.0.3
     # via jinja2
 packaging==26.0
@@ -80,10 +84,12 @@ salt==3007.13
     # via jinja-parser (pyproject.toml)
 sniffio==1.3.1
     # via httpx
-starlette==0.46.2
+starlette==0.49.3
     # via fastapi
 tomli==2.4.0
     # via pytest
+tornado==6.5.4
+    # via jinja-parser (pyproject.toml)
 typing-extensions==4.15.0
     # via
     #   anyio
@@ -97,6 +103,8 @@ typing-extensions==4.15.0
     #   typing-inspection
     #   uvicorn
 typing-inspection==0.4.2
-    # via pydantic
-uvicorn==0.34.3
+    # via
+    #   fastapi
+    #   pydantic
+uvicorn==0.38.0
     # via jinja-parser (pyproject.toml)
