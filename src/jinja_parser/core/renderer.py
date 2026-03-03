@@ -1,5 +1,6 @@
 import hashlib
 import ipaddress
+import os
 import tempfile
 from typing import Any, Dict, List
 
@@ -62,11 +63,20 @@ class RenderEngine:
         options: Dict[str, bool],
         selected_filters: List[str],
     ) -> str:
+        ansible_tmp = "/tmp/.ansible/tmp"
+        os.makedirs(ansible_tmp, exist_ok=True)
+        os.environ.setdefault("ANSIBLE_LOCAL_TEMP", ansible_tmp)
+        os.environ.setdefault("ANSIBLE_REMOTE_TEMP", ansible_tmp)
+        os.environ.setdefault("ANSIBLE_HOME", "/tmp/.ansible")
+
         try:
             from ansible.parsing.dataloader import DataLoader
             from ansible.template import Templar
+            import ansible.constants as ansible_constants
         except ImportError as exc:
             return f"Rendering error:\n\nAnsible runtime unavailable: {exc}"
+
+        ansible_constants.DEFAULT_LOCAL_TMP = ansible_tmp
 
         strict = bool(options.get("strict", False))
         trim = bool(options.get("trim", False))

@@ -9,6 +9,9 @@ services:
       - "8000:8000"
     environment:
       JINJA_SHARE_SECRET: ${JINJA_SHARE_SECRET}
+      ANSIBLE_LOCAL_TEMP: /tmp/.ansible/tmp
+      ANSIBLE_REMOTE_TEMP: /tmp/.ansible/tmp
+      ANSIBLE_HOME: /tmp/.ansible
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=64m
