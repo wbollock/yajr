@@ -23,6 +23,33 @@ function currentPayload() {
   };
 }
 
+function loadDefaults() {
+  document.getElementById("j2_template").value = [
+    "{% for iface in interfaces %}",
+    "interface {{ iface.name }}",
+    "  description {{ iface.description | default('N/A') }}",
+    "  ip address {{ iface.ip | ipaddr('address') }} {{ iface.ip | ipaddr('network') }}",
+    "{% endfor %}",
+  ].join("\\n");
+
+  document.getElementById("j2_data").value = [
+    "interfaces:",
+    "  - name: Ethernet1",
+    "    description: Uplink to core",
+    "    ip: 192.0.2.10/24",
+    "  - name: Ethernet2",
+    "    description: Server VLAN",
+    "    ip: 198.51.100.5/24",
+  ].join("\\n");
+
+  document.getElementById("opt_strict").checked = true;
+  document.getElementById("opt_trim").checked = true;
+  document.getElementById("opt_lstrip").checked = true;
+  document.getElementById("filter_hash").checked = false;
+  document.getElementById("filter_ipaddr").checked = true;
+  document.querySelector(\"input[name='render_mode'][value='base']\").checked = true;
+}
+
 function classifyWhitespaces(text) {
   const wrap = document.createElement("span");
   const normal = [];
@@ -128,6 +155,7 @@ async function loadShare(token) {
 document.getElementById("request_render").addEventListener("click", renderTemplate);
 document.getElementById("create_share").addEventListener("click", createShare);
 document.getElementById("toggle_whitespaces").addEventListener("change", applyWhitespaceToggle);
+document.getElementById("load_defaults").addEventListener("click", loadDefaults);
 
 document.getElementById("reset_render").addEventListener("click", function () {
   document.getElementById("render_results").textContent = "";

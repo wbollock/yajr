@@ -24,4 +24,6 @@ jinja-render --mode base --template-file template.j2 --data-file data.yml
 
 ## Status
 - Base Jinja mode: implemented.
-- Ansible/Salt compatibility adapters: planned next.
+- Ansible mode: implemented via `ansible-core` templating runtime.
+- Salt mode: implemented via Salt Jinja renderer.
+- UI includes a `Load defaults` button for starter template/data.

@@ -16,8 +16,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-ansible = ["ansible-core>=2.17.0"]
-salt = ["salt>=3007.0"]
+ansible = ["ansible-core>=2.15.0,<2.16.0"]
+salt = ["salt>=3006.0,<3008.0"]
 dev = [
   "pytest>=8.0.0,<8.4.0",
   "httpx>=0.27.0,<0.28.0",
