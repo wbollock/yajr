@@ -1,0 +1,21 @@
+services:
+  yajr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: yajr
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      JINJA_SHARE_SECRET: ${JINJA_SHARE_SECRET}
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 200
+    mem_limit: 512m
+    cpus: 1.0
