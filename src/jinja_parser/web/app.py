@@ -39,6 +39,7 @@ def create_app(secret: Optional[str] = None) -> FastAPI:
     static_dir = root / "web" / "static"
     template_dir = root / "web" / "templates"
     templates = Jinja2Templates(directory=str(template_dir))
+    asset_version = str(int((static_dir / "css" / "site.css").stat().st_mtime)) if static_dir.exists() else "1"
     if static_dir.exists():
         app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
@@ -75,6 +76,7 @@ def create_app(secret: Optional[str] = None) -> FastAPI:
             {
                 "request": request,
                 "initial_token": "",
+                "asset_version": asset_version,
             },
         )
 
@@ -85,6 +87,7 @@ def create_app(secret: Optional[str] = None) -> FastAPI:
             {
                 "request": request,
                 "initial_token": token,
+                "asset_version": asset_version,
             },
         )
 

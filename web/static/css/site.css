@@ -1,6 +1,6 @@
 :root {
-  --bg-top: #2b3441;
-  --bg-bottom: #2d3847;
+  --bg-top: #2f3948;
+  --bg-bottom: #2f3948;
   --panel: #344152;
   --ink: #e6ebf2;
   --muted: #b4c0d1;
@@ -17,8 +17,8 @@
 }
 
 body[data-theme="light"] {
-  --bg-top: #f1f7f5;
-  --bg-bottom: #edf1f8;
+  --bg-top: #eef3f9;
+  --bg-bottom: #eef3f9;
   --panel: #ffffff;
   --ink: #1a1f2b;
   --muted: #5a6579;
@@ -218,10 +218,12 @@ button:hover {
 .status {
   margin: 10px 0 0;
   min-height: 1.2em;
-  color: var(--muted);
   font-size: 0.92rem;
-  background: var(--input-bg);
-  color: var(--ink);
+  color: var(--muted);
+}
+
+.status:empty {
+  display: none;
 }
 
 .status.error {
