@@ -59,6 +59,54 @@ function currentPayload() {
 }
 
 function loadDefaults() {
+  const mode = document.querySelector("input[name='render_mode']:checked").value;
+
+  document.getElementById("opt_strict").checked = true;
+  document.getElementById("opt_trim").checked = true;
+  document.getElementById("opt_lstrip").checked = true;
+  document.getElementById("filter_hash").checked = false;
+  document.getElementById("filter_ipaddr").checked = false;
+
+  if (mode === "ansible") {
+    document.getElementById("j2_template").value = [
+      "{% set ports = {'eth0': 'up', 'eth1': 'down'} | dict2items %}",
+      "interfaces_total: {{ ports | length }}",
+      "vlan_id: {{ 'vlan-123' | regex_search('[0-9]+') }}",
+      "yaml_summary:",
+      "{{ {'site': site_name, 'vlans': vlans} | to_nice_yaml(indent=2) }}",
+    ].join("\n");
+
+    document.getElementById("j2_data").value = [
+      "site_name: edge-a",
+      "vlans:",
+      "  - 10",
+      "  - 20",
+      "  - 30",
+    ].join("\n");
+
+    setStatus("Loaded Ansible-specific defaults.", false);
+    return;
+  }
+
+  if (mode === "salt") {
+    document.getElementById("j2_template").value = [
+      "{% load_yaml as cfg %}",
+      "users:",
+      "  - alice",
+      "  - bob",
+      "{% endload %}",
+      "users_json: {{ cfg.users | json }}",
+      "quoted_env: {{ env | yaml_dquote }}",
+    ].join("\n");
+
+    document.getElementById("j2_data").value = [
+      "env: prod",
+    ].join("\n");
+
+    setStatus("Loaded Salt-specific defaults.", false);
+    return;
+  }
+
   document.getElementById("j2_template").value = [
     "{% for iface in interfaces %}",
     "interface {{ iface.name }}",
@@ -76,14 +124,8 @@ function loadDefaults() {
     "    description: Server VLAN",
     "    ip: 198.51.100.5/24",
   ].join("\n");
-
-  document.getElementById("opt_strict").checked = true;
-  document.getElementById("opt_trim").checked = true;
-  document.getElementById("opt_lstrip").checked = true;
-  document.getElementById("filter_hash").checked = false;
   document.getElementById("filter_ipaddr").checked = true;
-  document.querySelector("input[name='render_mode'][value='base']").checked = true;
-  setStatus("Loaded defaults.", false);
+  setStatus("Loaded Base Jinja defaults.", false);
 }
 
 function classifyWhitespaces(text) {
