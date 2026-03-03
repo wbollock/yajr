@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from jinja_parser.web.app import create_app
+from jinja_parser.web.app import MAX_DATA_CHARS, MAX_TEMPLATE_CHARS, create_app
 
 
 def test_render_endpoint_works():
@@ -47,3 +47,33 @@ def test_index_contains_runtime_versions_label():
     response = client.get("/")
     assert response.status_code == 200
     assert "Runtime support" in response.text
+
+
+def test_render_rejects_oversized_template():
+    client = TestClient(create_app(secret="test-secret"))
+    response = client.post(
+        "/api/render",
+        json={
+            "template": "x" * (MAX_TEMPLATE_CHARS + 1),
+            "data": "{}",
+            "render_mode": "base",
+            "options": {"strict": False, "trim": False, "lstrip": False},
+            "filters": [],
+        },
+    )
+    assert response.status_code == 422
+
+
+def test_render_rejects_oversized_data():
+    client = TestClient(create_app(secret="test-secret"))
+    response = client.post(
+        "/api/render",
+        json={
+            "template": "{{ x }}",
+            "data": "x" * (MAX_DATA_CHARS + 1),
+            "render_mode": "base",
+            "options": {"strict": False, "trim": False, "lstrip": False},
+            "filters": [],
+        },
+    )
+    assert response.status_code == 422

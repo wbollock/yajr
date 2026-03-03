@@ -14,10 +14,13 @@ from jinja_parser.core.models import RenderRequest
 from jinja_parser.core.renderer import RenderEngine
 from jinja_parser.core.share_store import ShareStore
 
+MAX_TEMPLATE_CHARS = 200_000
+MAX_DATA_CHARS = 200_000
+
 
 class RenderPayload(BaseModel):
-    template: str = ""
-    data: str = ""
+    template: str = Field(default="", max_length=MAX_TEMPLATE_CHARS)
+    data: str = Field(default="", max_length=MAX_DATA_CHARS)
     render_mode: str = Field(default="base")
     options: Dict[str, bool] = Field(default_factory=dict)
     filters: List[str] = Field(default_factory=list)
