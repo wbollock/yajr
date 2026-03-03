@@ -3,60 +3,73 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>J2Live Clone - Secure Jinja Renderer</title>
+  <title>YAJR - Yet Another Jinja Renderer</title>
   <link rel="stylesheet" href="/static/css/site.css" />
 </head>
 <body>
-  <div class="container">
-    <header class="title-row">
-      <h1>J2Live Clone</h1>
-      <p>Secure Jinja renderer with stateless share links</p>
+  <div class="shell">
+    <header class="hero">
+      <h1>YAJR</h1>
+      <p>Yet Another Jinja Renderer. Secure rendering, shareable links, and parity-focused modes.</p>
     </header>
 
-    <main class="grid">
-      <section>
-        <label for="j2_template">Jinja2 Template</label>
-        <textarea id="j2_template" spellcheck="false"></textarea>
+    <main class="workspace">
+      <section class="panel panel-left">
+        <div class="input-block">
+          <label for="j2_template">Jinja2 Template</label>
+          <textarea id="j2_template" spellcheck="false" placeholder="Write your template here"></textarea>
+        </div>
 
-        <label for="j2_data">Jinja2 Data (YAML or JSON)</label>
-        <textarea id="j2_data" spellcheck="false"></textarea>
+        <div class="input-block">
+          <label for="j2_data">Jinja2 Data (YAML or JSON)</label>
+          <textarea id="j2_data" spellcheck="false" placeholder="name: world"></textarea>
+        </div>
 
         <div class="controls">
           <fieldset>
-            <legend>Rendering mode ?</legend>
+            <legend>Rendering mode</legend>
             <label><input type="radio" name="render_mode" value="base" checked /> Base Jinja2</label>
             <label><input type="radio" name="render_mode" value="ansible" /> Ansible</label>
             <label><input type="radio" name="render_mode" value="salt" /> Salt</label>
           </fieldset>
+
           <fieldset>
-            <legend>Rendering options ?</legend>
+            <legend>Rendering options</legend>
             <label><input type="checkbox" id="opt_trim" /> Trim</label>
             <label><input type="checkbox" id="opt_lstrip" /> Lstrip</label>
             <label><input type="checkbox" id="opt_strict" /> Strict check</label>
           </fieldset>
+
           <fieldset>
-            <legend>Additional filters ?</legend>
+            <legend>Additional filters</legend>
             <label><input type="checkbox" class="add_filters" id="filter_hash" /> hash</label>
             <label><input type="checkbox" class="add_filters" id="filter_ipaddr" /> ipaddr</label>
           </fieldset>
         </div>
       </section>
 
-      <section>
-        <label for="render_results">Rendered Template</label>
-        <pre id="render_results"></pre>
-        <label class="show-ws"><input type="checkbox" id="toggle_whitespaces" /> Show whitespaces ?</label>
-
-        <div class="actions">
-          <button id="load_defaults">Load defaults</button>
-          <button id="request_render">Render template</button>
-          <button id="reset_render">Clear render</button>
-          <button id="copy_render">Copy output</button>
-          <button id="create_share">Create share link</button>
+      <section class="panel panel-right">
+        <div class="panel-head">
+          <label for="render_results">Rendered Template</label>
+          <label class="show-ws"><input type="checkbox" id="toggle_whitespaces" /> Show whitespaces</label>
         </div>
 
-        <label for="share_url">Share URL</label>
-        <input id="share_url" type="text" readonly />
+        <pre id="render_results"></pre>
+
+        <div class="actions">
+          <button id="load_defaults" type="button">Load defaults</button>
+          <button id="request_render" type="button" class="btn-primary">Render template</button>
+          <button id="reset_render" type="button">Clear render</button>
+          <button id="copy_render" type="button">Copy output</button>
+          <button id="create_share" type="button">Create share link</button>
+        </div>
+
+        <div class="share-group">
+          <label for="share_url">Share URL</label>
+          <input id="share_url" type="text" readonly placeholder="Click ‘Create share link’" />
+        </div>
+
+        <p id="status_line" class="status" aria-live="polite"></p>
       </section>
     </main>
   </div>

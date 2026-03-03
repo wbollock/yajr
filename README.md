@@ -1,6 +1,6 @@
-# jinja_parser
+# YAJR (jinja_parser)
 
-Secure J2Live-style Jinja renderer with:
+Secure YAJR (Yet Another Jinja Renderer) with:
 - Shared rendering core for CLI and web
 - Stateless share links (signed + compressed token)
 - TDD-backed behavior

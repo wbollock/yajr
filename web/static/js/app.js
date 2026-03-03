@@ -1,3 +1,17 @@
+function statusLine() {
+  return document.getElementById("status_line");
+}
+
+function setStatus(message, isError) {
+  const el = statusLine();
+  el.textContent = message || "";
+  if (isError) {
+    el.classList.add("error");
+  } else {
+    el.classList.remove("error");
+  }
+}
+
 function selectedFilters() {
   const filters = [];
   document.querySelectorAll(".add_filters").forEach((el) => {
@@ -30,7 +44,7 @@ function loadDefaults() {
     "  description {{ iface.description | default('N/A') }}",
     "  ip address {{ iface.ip | ipaddr('address') }} {{ iface.ip | ipaddr('network') }}",
     "{% endfor %}",
-  ].join("\\n");
+  ].join("\n");
 
   document.getElementById("j2_data").value = [
     "interfaces:",
@@ -40,14 +54,15 @@ function loadDefaults() {
     "  - name: Ethernet2",
     "    description: Server VLAN",
     "    ip: 198.51.100.5/24",
-  ].join("\\n");
+  ].join("\n");
 
   document.getElementById("opt_strict").checked = true;
   document.getElementById("opt_trim").checked = true;
   document.getElementById("opt_lstrip").checked = true;
   document.getElementById("filter_hash").checked = false;
   document.getElementById("filter_ipaddr").checked = true;
-  document.querySelector(\"input[name='render_mode'][value='base']\").checked = true;
+  document.querySelector("input[name='render_mode'][value='base']").checked = true;
+  setStatus("Loaded defaults.", false);
 }
 
 function classifyWhitespaces(text) {
@@ -97,72 +112,95 @@ function applyWhitespaceToggle() {
   });
 }
 
-async function renderTemplate() {
-  const payload = currentPayload();
-  const response = await fetch("/api/render", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+async function jsonFetch(url, payload) {
+  const response = await fetch(url, {
+    method: payload ? "POST" : "GET",
+    headers: payload ? { "Content-Type": "application/json" } : undefined,
+    body: payload ? JSON.stringify(payload) : undefined,
   });
-  const data = await response.json();
 
-  const pre = document.getElementById("render_results");
-  pre.innerHTML = "";
-  pre.append(classifyWhitespaces(data.render_result || ""));
-  applyWhitespaceToggle();
+  const data = await response.json();
+  if (!response.ok) {
+    const detail = data.detail || "Request failed.";
+    throw new Error(detail);
+  }
+  return data;
+}
+
+async function renderTemplate() {
+  try {
+    const data = await jsonFetch("/api/render", currentPayload());
+    const pre = document.getElementById("render_results");
+    pre.innerHTML = "";
+    pre.append(classifyWhitespaces(data.render_result || ""));
+    applyWhitespaceToggle();
+    setStatus("Rendered template.", false);
+  } catch (error) {
+    setStatus(`Render failed: ${error.message}`, true);
+  }
 }
 
 async function createShare() {
-  const payload = currentPayload();
-  const response = await fetch("/api/share", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const data = await response.json();
-  document.getElementById("share_url").value = data.share_url || "";
+  try {
+    const data = await jsonFetch("/api/share", currentPayload());
+    document.getElementById("share_url").value = data.share_url || "";
+    setStatus("Share link created.", false);
+  } catch (error) {
+    setStatus(`Share failed: ${error.message}`, true);
+  }
 }
 
 async function loadShare(token) {
   if (!token) {
     return;
   }
-  const response = await fetch(`/api/share/${token}`);
-  if (!response.ok) {
-    return;
+
+  try {
+    const payload = await jsonFetch(`/api/share/${token}`);
+    document.getElementById("j2_template").value = payload.template || "";
+    document.getElementById("j2_data").value = payload.data || "";
+
+    const target = document.querySelector(`input[name='render_mode'][value='${payload.render_mode}']`);
+    if (target) {
+      target.checked = true;
+    }
+
+    const options = payload.options || {};
+    document.getElementById("opt_strict").checked = !!options.strict;
+    document.getElementById("opt_trim").checked = !!options.trim;
+    document.getElementById("opt_lstrip").checked = !!options.lstrip;
+
+    const activeFilters = payload.filters || [];
+    document.querySelectorAll(".add_filters").forEach((el) => {
+      const key = el.id.replace("filter_", "");
+      el.checked = activeFilters.includes(key);
+    });
+
+    setStatus("Loaded shared template.", false);
+  } catch (error) {
+    setStatus(`Could not load share link: ${error.message}`, true);
   }
-  const payload = await response.json();
-  document.getElementById("j2_template").value = payload.template || "";
-  document.getElementById("j2_data").value = payload.data || "";
-
-  const target = document.querySelector(`input[name='render_mode'][value='${payload.render_mode}']`);
-  if (target) {
-    target.checked = true;
-  }
-
-  const options = payload.options || {};
-  document.getElementById("opt_strict").checked = !!options.strict;
-  document.getElementById("opt_trim").checked = !!options.trim;
-  document.getElementById("opt_lstrip").checked = !!options.lstrip;
-
-  const activeFilters = payload.filters || [];
-  document.querySelectorAll(".add_filters").forEach((el) => {
-    const key = el.id.replace("filter_", "");
-    el.checked = activeFilters.includes(key);
-  });
 }
 
+function clearRender() {
+  document.getElementById("render_results").textContent = "";
+  setStatus("Render output cleared.", false);
+}
+
+async function copyRender() {
+  try {
+    await navigator.clipboard.writeText(document.getElementById("render_results").innerText || "");
+    setStatus("Rendered output copied.", false);
+  } catch (error) {
+    setStatus("Copy failed. Browser clipboard access is unavailable.", true);
+  }
+}
+
+document.getElementById("load_defaults").addEventListener("click", loadDefaults);
 document.getElementById("request_render").addEventListener("click", renderTemplate);
+document.getElementById("reset_render").addEventListener("click", clearRender);
+document.getElementById("copy_render").addEventListener("click", copyRender);
 document.getElementById("create_share").addEventListener("click", createShare);
 document.getElementById("toggle_whitespaces").addEventListener("change", applyWhitespaceToggle);
-document.getElementById("load_defaults").addEventListener("click", loadDefaults);
-
-document.getElementById("reset_render").addEventListener("click", function () {
-  document.getElementById("render_results").textContent = "";
-});
-
-document.getElementById("copy_render").addEventListener("click", function () {
-  navigator.clipboard.writeText(document.getElementById("render_results").innerText || "");
-});
 
 loadShare(window.__INITIAL_SHARE_TOKEN__);
