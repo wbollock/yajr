@@ -6,6 +6,14 @@ Secure YAJR (Yet Another Jinja Renderer) with:
 - TDD-backed behavior
 
 ## Quick start
+## Mise workflow
+```bash
+mise install
+mise run install
+mise run test
+mise run run
+```
+
 ```bash
 python3 -m pip install -e '.[dev]'
 pytest -q

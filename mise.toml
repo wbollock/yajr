@@ -1,0 +1,22 @@
+[tools]
+python = "3.12"
+uv = "latest"
+
+[env]
+PYTHONPATH = "src"
+
+[tasks.install]
+description = "Sync project dependencies from lockfile"
+run = "uv pip sync requirements.lock.txt"
+
+[tasks.lock]
+description = "Regenerate lockfile from pyproject"
+run = "uv pip compile pyproject.toml --extra dev --extra ansible --extra salt -o requirements.lock.txt --python-version 3.12"
+
+[tasks.test]
+description = "Run test suite"
+run = "pytest -q"
+
+[tasks.run]
+description = "Run YAJR locally"
+run = "uv run uvicorn jinja_parser.web.app:app --host 0.0.0.0 --port 8000 --reload"
