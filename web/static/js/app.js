@@ -12,6 +12,25 @@ function setStatus(message, isError) {
   }
 }
 
+
+function applyTheme(theme) {
+  const body = document.body;
+  const toggle = document.getElementById("theme_toggle");
+  const mode = theme === "light" ? "light" : "dark";
+  body.setAttribute("data-theme", mode);
+  toggle.checked = mode === "dark";
+  localStorage.setItem("yajr_theme", mode);
+}
+
+function initTheme() {
+  const saved = localStorage.getItem("yajr_theme");
+  applyTheme(saved || "dark");
+}
+
+function toggleTheme(event) {
+  applyTheme(event.target.checked ? "dark" : "light");
+}
+
 function selectedFilters() {
   const filters = [];
   document.querySelectorAll(".add_filters").forEach((el) => {
@@ -202,5 +221,7 @@ document.getElementById("reset_render").addEventListener("click", clearRender);
 document.getElementById("copy_render").addEventListener("click", copyRender);
 document.getElementById("create_share").addEventListener("click", createShare);
 document.getElementById("toggle_whitespaces").addEventListener("change", applyWhitespaceToggle);
+document.getElementById("theme_toggle").addEventListener("change", toggleTheme);
 
+initTheme();
 loadShare(window.__INITIAL_SHARE_TOKEN__);
