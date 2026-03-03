@@ -1,0 +1,124 @@
+:root {
+  --bg: #f7f4ef;
+  --panel: #fff;
+  --ink: #1b1d20;
+  --accent: #136f63;
+  --border: #cdd5df;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: radial-gradient(circle at top right, #e9f3f1, var(--bg) 50%);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.title-row h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.title-row p {
+  margin-top: 6px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+  margin: 10px 0 6px;
+}
+
+textarea,
+input,
+pre {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.95rem;
+}
+
+textarea {
+  min-height: 210px;
+  resize: vertical;
+}
+
+pre {
+  min-height: 300px;
+  margin: 0;
+  white-space: pre-wrap;
+  overflow: auto;
+  background: #fafbfc;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+fieldset {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+legend {
+  font-weight: 600;
+  padding: 0 6px;
+}
+
+fieldset label {
+  margin: 8px;
+  font-weight: 500;
+}
+
+.actions {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+button {
+  border: 1px solid var(--accent);
+  color: #fff;
+  background: var(--accent);
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(0.95);
+}
+
+@media (max-width: 980px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

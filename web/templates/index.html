@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>J2Live Clone - Secure Jinja Renderer</title>
+  <link rel="stylesheet" href="/static/css/site.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="title-row">
+      <h1>J2Live Clone</h1>
+      <p>Secure Jinja renderer with stateless share links</p>
+    </header>
+
+    <main class="grid">
+      <section>
+        <label for="j2_template">Jinja2 Template</label>
+        <textarea id="j2_template" spellcheck="false"></textarea>
+
+        <label for="j2_data">Jinja2 Data (YAML or JSON)</label>
+        <textarea id="j2_data" spellcheck="false"></textarea>
+
+        <div class="controls">
+          <fieldset>
+            <legend>Rendering mode</legend>
+            <label><input type="radio" name="render_mode" value="base" checked /> Base Jinja2</label>
+            <label><input type="radio" name="render_mode" value="ansible" /> Ansible</label>
+            <label><input type="radio" name="render_mode" value="salt" /> Salt</label>
+          </fieldset>
+          <fieldset>
+            <legend>Rendering options</legend>
+            <label><input type="checkbox" id="opt_trim" /> Trim</label>
+            <label><input type="checkbox" id="opt_lstrip" /> Lstrip</label>
+            <label><input type="checkbox" id="opt_strict" /> Strict check</label>
+          </fieldset>
+        </div>
+      </section>
+
+      <section>
+        <label for="render_results">Rendered Template</label>
+        <pre id="render_results"></pre>
+
+        <div class="actions">
+          <button id="request_render">Render template</button>
+          <button id="reset_render">Clear render</button>
+          <button id="copy_render">Copy output</button>
+          <button id="create_share">Create share link</button>
+        </div>
+
+        <label for="share_url">Share URL</label>
+        <input id="share_url" type="text" readonly />
+      </section>
+    </main>
+  </div>
+
+  <script>
+    window.__INITIAL_SHARE_TOKEN__ = "{{ initial_token }}";
+  </script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
