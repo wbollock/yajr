@@ -27,7 +27,7 @@ def test_share_endpoint_roundtrip_without_db():
         "data": "x: 7",
         "render_mode": "base",
         "options": {"strict": True, "trim": False, "lstrip": False},
-        "filters": [],
+        "filters": ["hash", "ipaddr"],
     }
 
     share_response = client.post("/api/share", json=payload)

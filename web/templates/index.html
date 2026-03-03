@@ -23,16 +23,21 @@
 
         <div class="controls">
           <fieldset>
-            <legend>Rendering mode</legend>
+            <legend>Rendering mode ?</legend>
             <label><input type="radio" name="render_mode" value="base" checked /> Base Jinja2</label>
             <label><input type="radio" name="render_mode" value="ansible" /> Ansible</label>
             <label><input type="radio" name="render_mode" value="salt" /> Salt</label>
           </fieldset>
           <fieldset>
-            <legend>Rendering options</legend>
+            <legend>Rendering options ?</legend>
             <label><input type="checkbox" id="opt_trim" /> Trim</label>
             <label><input type="checkbox" id="opt_lstrip" /> Lstrip</label>
             <label><input type="checkbox" id="opt_strict" /> Strict check</label>
+          </fieldset>
+          <fieldset>
+            <legend>Additional filters ?</legend>
+            <label><input type="checkbox" class="add_filters" id="filter_hash" /> hash</label>
+            <label><input type="checkbox" class="add_filters" id="filter_ipaddr" /> ipaddr</label>
           </fieldset>
         </div>
       </section>
@@ -40,6 +45,7 @@
       <section>
         <label for="render_results">Rendered Template</label>
         <pre id="render_results"></pre>
+        <label class="show-ws"><input type="checkbox" id="toggle_whitespaces" /> Show whitespaces ?</label>
 
         <div class="actions">
           <button id="request_render">Render template</button>
