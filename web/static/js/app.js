@@ -18,7 +18,8 @@ function applyTheme(theme) {
   const toggle = document.getElementById("theme_toggle");
   const mode = theme === "light" ? "light" : "dark";
   body.setAttribute("data-theme", mode);
-  toggle.checked = mode === "dark";
+  toggle.textContent = mode === "dark" ? "Dark mode" : "Light mode";
+  toggle.setAttribute("aria-pressed", mode === "dark" ? "true" : "false");
   localStorage.setItem("yajr_theme", mode);
 }
 
@@ -27,8 +28,9 @@ function initTheme() {
   applyTheme(saved || "dark");
 }
 
-function toggleTheme(event) {
-  applyTheme(event.target.checked ? "dark" : "light");
+function toggleTheme() {
+  const current = document.body.getAttribute("data-theme") || "dark";
+  applyTheme(current === "dark" ? "light" : "dark");
 }
 
 function selectedFilters() {
@@ -146,16 +148,20 @@ async function jsonFetch(url, payload) {
   return data;
 }
 
-async function renderTemplate() {
+async function renderTemplate(showSuccessStatus) {
+  const shouldShowStatus = showSuccessStatus !== false;
   try {
     const data = await jsonFetch("/api/render", currentPayload());
     const pre = document.getElementById("render_results");
     pre.innerHTML = "";
     pre.append(classifyWhitespaces(data.render_result || ""));
     applyWhitespaceToggle();
-    setStatus("Rendered template.", false);
+    if (shouldShowStatus) {
+      setStatus("Rendered template.", false);
+    }
   } catch (error) {
     setStatus(`Render failed: ${error.message}`, true);
+    throw error;
   }
 }
 
@@ -195,7 +201,8 @@ async function loadShare(token) {
       el.checked = activeFilters.includes(key);
     });
 
-    setStatus("Loaded shared template.", false);
+    await renderTemplate(false);
+    setStatus("Loaded shared template and rendered output.", false);
   } catch (error) {
     setStatus(`Could not load share link: ${error.message}`, true);
   }
@@ -207,11 +214,35 @@ function clearRender() {
 }
 
 async function copyRender() {
+  const text = document.getElementById("render_results").innerText || "";
+  if (!text) {
+    setStatus("Nothing to copy yet.", true);
+    return;
+  }
+
   try {
-    await navigator.clipboard.writeText(document.getElementById("render_results").innerText || "");
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      setStatus("Rendered output copied.", false);
+      return;
+    }
+
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.top = "-9999px";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+    if (!ok) {
+      throw new Error("execCommand copy failed");
+    }
     setStatus("Rendered output copied.", false);
   } catch (error) {
-    setStatus("Copy failed. Browser clipboard access is unavailable.", true);
+    setStatus("Copy failed. Use Ctrl/Cmd+C as fallback.", true);
   }
 }
 
@@ -221,7 +252,7 @@ document.getElementById("reset_render").addEventListener("click", clearRender);
 document.getElementById("copy_render").addEventListener("click", copyRender);
 document.getElementById("create_share").addEventListener("click", createShare);
 document.getElementById("toggle_whitespaces").addEventListener("change", applyWhitespaceToggle);
-document.getElementById("theme_toggle").addEventListener("change", toggleTheme);
+document.getElementById("theme_toggle").addEventListener("click", toggleTheme);
 
 initTheme();
 loadShare(window.__INITIAL_SHARE_TOKEN__);

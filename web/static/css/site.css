@@ -68,13 +68,8 @@ body {
   letter-spacing: 0.02em;
 }
 
-.theme-toggle {
-  margin: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  color: var(--muted);
+.theme-toggle-btn {
+  min-width: 110px;
 }
 
 .hero p {
