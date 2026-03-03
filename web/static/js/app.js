@@ -210,8 +210,36 @@ async function renderTemplate(showSuccessStatus) {
 async function createShare() {
   try {
     const data = await jsonFetch("/api/share", currentPayload());
-    document.getElementById("share_url").value = data.share_url || "";
-    setStatus("Share link created.", false);
+    const shareUrl = data.share_url || "";
+    document.getElementById("share_url").value = shareUrl;
+
+    if (!shareUrl) {
+      setStatus("Share link created, but URL was empty.", true);
+      return;
+    }
+
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = shareUrl;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.top = "-9999px";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        if (!ok) {
+          throw new Error("execCommand copy failed");
+        }
+      }
+      setStatus("Share link created and copied to clipboard.", false);
+    } catch (copyError) {
+      setStatus("Share link created, but clipboard copy failed.", true);
+    }
   } catch (error) {
     setStatus(`Share failed: ${error.message}`, true);
   }
