@@ -12,6 +12,17 @@ pytest -q
 uvicorn jinja_parser.web.app:app --reload
 ```
 
+## Reproducible deps
+```bash
+python3 -m pip install -r requirements.lock.txt
+```
+
+## UI E2E tests
+```bash
+python3 -m playwright install chromium
+pytest -q tests/test_e2e_ui.py
+```
+
 ## CLI
 ```bash
 jinja-render --mode base --template-file template.j2 --data-file data.yml
