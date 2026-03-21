@@ -19,7 +19,10 @@
         <button id="theme_toggle" type="button" class="theme-toggle-btn" aria-pressed="true">Dark mode</button>
       </div>
       <p>Yet Another Jinja Renderer, with shareable short links. Do not put anything sensitive in templates or input data.</p>
-      <p class="runtime-meta">Runtime support: Ansible {{ ansible_version }} · Salt {{ salt_version }}</p>
+      <p class="runtime-meta">
+        <a href="https://github.com/wbollock/yajr" target="_blank" rel="noopener noreferrer">v{{ yajr_version }}</a>
+        · Runtime support: Ansible {{ ansible_version }} · Salt {{ salt_version }}
+      </p>
     </header>
 
     <main class="workspace">

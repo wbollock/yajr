@@ -92,6 +92,15 @@ body {
   font-size: 0.86rem;
 }
 
+.runtime-meta a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.runtime-meta a:hover {
+  color: var(--accent);
+}
+
 .workspace {
   display: grid;
   gap: 16px;

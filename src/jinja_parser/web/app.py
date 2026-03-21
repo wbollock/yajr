@@ -112,6 +112,7 @@ def create_app(secret: Optional[str] = None) -> FastAPI:
             "request": request,
             "initial_token": initial_token,
             "asset_version": asset_version,
+            "yajr_version": _runtime_version("jinja-parser"),
             "ansible_version": _runtime_version("ansible-core"),
             "salt_version": _runtime_version("salt"),
         }
