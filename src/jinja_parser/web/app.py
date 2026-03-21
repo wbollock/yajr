@@ -1,5 +1,7 @@
 import importlib.metadata
+import logging
 import os
+from collections import Counter
 from dataclasses import asdict
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -13,6 +15,12 @@ from pydantic import BaseModel, Field
 from jinja_parser.core.models import RenderRequest
 from jinja_parser.core.renderer import RenderEngine
 from jinja_parser.core.share_store import ShareStore
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+log = logging.getLogger("yajr")
 
 MAX_TEMPLATE_CHARS = 200_000
 MAX_DATA_CHARS = 200_000
@@ -42,10 +50,18 @@ def _runtime_version(pkg_name: str) -> str:
         return "not installed"
 
 
+def _client_ip(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
 def create_app(secret: Optional[str] = None) -> FastAPI:
     app = FastAPI(title="YAJR")
     engine = RenderEngine()
     share_store = ShareStore()
+    stats: Counter = Counter()
     root = Path(__file__).resolve().parents[3]
     static_dir = root / "web" / "static"
     template_dir = root / "web" / "templates"
@@ -65,21 +81,31 @@ def create_app(secret: Optional[str] = None) -> FastAPI:
         return {"status": "ok"}
 
     @app.post("/api/render")
-    def render(payload: RenderPayload) -> Dict[str, str]:
+    def render(payload: RenderPayload, request: Request) -> Dict[str, str]:
+        stats["renders"] += 1
+        log.info("render ip=%s mode=%s", _client_ip(request), payload.render_mode)
         return {"render_result": engine.render(payload.to_request())}
 
     @app.post("/api/share")
     def share(payload: RenderPayload, request: Request) -> Dict[str, str]:
+        stats["shares"] += 1
         token = share_store.create(payload.to_request())
         base = str(request.base_url).rstrip("/")
+        log.info("share_create ip=%s token=%s", _client_ip(request), token)
         return {"token": token, "share_url": f"{base}/s/{token}"}
 
     @app.get("/api/share/{token}")
-    def get_share(token: str) -> Dict[str, object]:
+    def get_share(token: str, request: Request) -> Dict[str, object]:
         payload = share_store.get(token)
         if payload is None:
             raise HTTPException(status_code=404, detail="Share link not found.")
+        stats["share_views"] += 1
+        log.info("share_view ip=%s token=%s", _client_ip(request), token)
         return payload
+
+    @app.get("/api/stats")
+    def get_stats() -> Dict[str, int]:
+        return dict(stats)
 
     def _base_context(request: Request, initial_token: str) -> Dict[str, object]:
         return {
@@ -92,10 +118,14 @@ def create_app(secret: Optional[str] = None) -> FastAPI:
 
     @app.get("/", response_class=HTMLResponse)
     def index(request: Request):
+        stats["page_views"] += 1
+        log.info("page_view ip=%s", _client_ip(request))
         return templates.TemplateResponse(request, "index.html", _base_context(request, ""))
 
     @app.get("/s/{token}", response_class=HTMLResponse)
     def shared_page(request: Request, token: str):
+        stats["page_views"] += 1
+        log.info("shared_page_view ip=%s token=%s", _client_ip(request), token)
         return templates.TemplateResponse(request, "index.html", _base_context(request, token))
 
     return app
