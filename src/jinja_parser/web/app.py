@@ -1,5 +1,5 @@
-import importlib.metadata
 import logging
+import tomllib
 import os
 from collections import Counter
 from dataclasses import asdict
@@ -43,10 +43,20 @@ class RenderPayload(BaseModel):
         )
 
 
+def _app_version() -> str:
+    try:
+        pyproject = Path(__file__).resolve().parents[3] / "pyproject.toml"
+        with open(pyproject, "rb") as f:
+            return tomllib.load(f)["project"]["version"]
+    except Exception:
+        return "unknown"
+
+
 def _runtime_version(pkg_name: str) -> str:
     try:
+        import importlib.metadata
         return importlib.metadata.version(pkg_name)
-    except importlib.metadata.PackageNotFoundError:
+    except Exception:
         return "not installed"
 
 
@@ -112,7 +122,7 @@ def create_app(secret: Optional[str] = None) -> FastAPI:
             "request": request,
             "initial_token": initial_token,
             "asset_version": asset_version,
-            "yajr_version": _runtime_version("jinja-parser"),
+            "yajr_version": _app_version(),
             "ansible_version": _runtime_version("ansible-core"),
             "salt_version": _runtime_version("salt"),
         }
