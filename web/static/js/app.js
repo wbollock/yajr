@@ -19,14 +19,12 @@ function initEditors() {
     mode: "jinja2",
     theme,
     lineNumbers: true,
-    lineWrapping: true,
     autofocus: false,
   });
   dataEditor = CodeMirror.fromTextArea(document.getElementById("j2_data"), {
     mode: "yaml",
     theme,
     lineNumbers: true,
-    lineWrapping: true,
   });
 
   outputEditor = CodeMirror(document.getElementById("render_results"), {

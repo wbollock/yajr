@@ -138,8 +138,7 @@ label {
 }
 
 textarea,
-input[type="text"],
-pre {
+input[type="text"] {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 9px;
@@ -201,13 +200,6 @@ fieldset label {
   color: var(--muted);
 }
 
-pre {
-  min-height: 360px;
-  margin: 0;
-  white-space: pre-wrap;
-  overflow: auto;
-  background: var(--input-bg);
-}
 
 .actions {
   margin-top: 12px;
