@@ -1,3 +1,44 @@
+let templateEditor, dataEditor, outputEditor;
+
+const wsOverlay = {
+  token(stream) {
+    const ch = stream.peek();
+    if (ch === " ") { stream.next(); return "ws-space"; }
+    if (ch === "\t") { stream.next(); return "ws-tab"; }
+    stream.skipTo(" ") || stream.skipTo("\t") || stream.skipToEnd();
+    return null;
+  },
+};
+let wsOverlayActive = false;
+
+function initEditors() {
+  const isDark = document.body.getAttribute("data-theme") !== "light";
+  const theme = isDark ? "dracula" : "eclipse";
+
+  templateEditor = CodeMirror.fromTextArea(document.getElementById("j2_template"), {
+    mode: "jinja2",
+    theme,
+    lineNumbers: true,
+    lineWrapping: true,
+    autofocus: false,
+  });
+  dataEditor = CodeMirror.fromTextArea(document.getElementById("j2_data"), {
+    mode: "yaml",
+    theme,
+    lineNumbers: true,
+    lineWrapping: true,
+  });
+
+  outputEditor = CodeMirror(document.getElementById("render_results"), {
+    mode: "text/plain",
+    theme,
+    lineNumbers: true,
+    lineWrapping: true,
+    readOnly: true,
+  });
+  outputEditor.setSize(null, 360);
+}
+
 function statusLine() {
   return document.getElementById("status_line");
 }
@@ -12,7 +53,6 @@ function setStatus(message, isError) {
   }
 }
 
-
 function applyTheme(theme) {
   const body = document.body;
   const toggle = document.getElementById("theme_toggle");
@@ -21,6 +61,11 @@ function applyTheme(theme) {
   toggle.textContent = mode === "dark" ? "Dark mode" : "Light mode";
   toggle.setAttribute("aria-pressed", mode === "dark" ? "true" : "false");
   localStorage.setItem("yajr_theme", mode);
+
+  const cmTheme = mode === "dark" ? "dracula" : "eclipse";
+  [templateEditor, dataEditor, outputEditor].forEach((editor) => {
+    if (editor) editor.setOption("theme", cmTheme);
+  });
 }
 
 function initTheme() {
@@ -46,8 +91,8 @@ function selectedFilters() {
 function currentPayload() {
   const mode = document.querySelector("input[name='render_mode']:checked").value;
   return {
-    template: document.getElementById("j2_template").value,
-    data: document.getElementById("j2_data").value,
+    template: templateEditor.getValue(),
+    data: dataEditor.getValue(),
     render_mode: mode,
     options: {
       strict: document.getElementById("opt_strict").checked,
@@ -68,28 +113,30 @@ function loadDefaults() {
   document.getElementById("filter_ipaddr").checked = false;
 
   if (mode === "ansible") {
-    document.getElementById("j2_template").value = [
+    templateEditor.setValue([
       "{% set ports = {'eth0': 'up', 'eth1': 'down'} | dict2items %}",
       "interfaces_total: {{ ports | length }}",
       "vlan_id: {{ 'vlan-123' | regex_search('[0-9]+') }}",
       "yaml_summary:",
       "{{ {'site': site_name, 'vlans': vlans} | to_nice_yaml(indent=2) }}",
-    ].join("\n");
+    ].join("\n"));
+    templateEditor.refresh();
 
-    document.getElementById("j2_data").value = [
+    dataEditor.setValue([
       "site_name: edge-a",
       "vlans:",
       "  - 10",
       "  - 20",
       "  - 30",
-    ].join("\n");
+    ].join("\n"));
+    dataEditor.refresh();
 
     setStatus("Loaded Ansible-specific defaults.", false);
     return;
   }
 
   if (mode === "salt") {
-    document.getElementById("j2_template").value = [
+    templateEditor.setValue([
       "{% load_yaml as cfg %}",
       "users:",
       "  - alice",
@@ -97,25 +144,28 @@ function loadDefaults() {
       "{% endload %}",
       "users_json: {{ cfg.users | json }}",
       "quoted_env: {{ env | yaml_dquote }}",
-    ].join("\n");
+    ].join("\n"));
+    templateEditor.refresh();
 
-    document.getElementById("j2_data").value = [
+    dataEditor.setValue([
       "env: prod",
-    ].join("\n");
+    ].join("\n"));
+    dataEditor.refresh();
 
     setStatus("Loaded Salt-specific defaults.", false);
     return;
   }
 
-  document.getElementById("j2_template").value = [
+  templateEditor.setValue([
     "{% for iface in interfaces %}",
     "interface {{ iface.name }}",
     "  description {{ iface.description | default('N/A') }}",
     "  ip address {{ iface.ip | ipaddr('address') }} {{ iface.ip | ipaddr('network') }}",
     "{% endfor %}",
-  ].join("\n");
+  ].join("\n"));
+  templateEditor.refresh();
 
-  document.getElementById("j2_data").value = [
+  dataEditor.setValue([
     "interfaces:",
     "  - name: Ethernet1",
     "    description: Uplink to core",
@@ -123,56 +173,21 @@ function loadDefaults() {
     "  - name: Ethernet2",
     "    description: Server VLAN",
     "    ip: 198.51.100.5/24",
-  ].join("\n");
+  ].join("\n"));
+  dataEditor.refresh();
   document.getElementById("filter_ipaddr").checked = true;
   setStatus("Loaded Base Jinja defaults.", false);
 }
 
-function classifyWhitespaces(text) {
-  const wrap = document.createElement("span");
-  const normal = [];
-
-  function flush() {
-    if (normal.length > 0) {
-      wrap.append(document.createTextNode(normal.join("")));
-      normal.length = 0;
-    }
-  }
-
-  for (let i = 0; i < text.length; i += 1) {
-    const ch = text[i];
-    if (ch === " " || ch === "\t" || ch === "\n") {
-      flush();
-      const marker = document.createElement("span");
-      if (ch === " ") {
-        marker.className = "ws_space";
-        marker.textContent = " ";
-      } else if (ch === "\t") {
-        marker.className = "ws_tab";
-        marker.textContent = "\t";
-      } else {
-        marker.className = "ws_newline";
-        marker.textContent = "\n";
-      }
-      wrap.append(marker);
-    } else {
-      normal.push(ch);
-    }
-  }
-
-  flush();
-  return wrap;
-}
-
 function applyWhitespaceToggle() {
   const enabled = document.getElementById("toggle_whitespaces").checked;
-  document.querySelectorAll(".ws_space,.ws_tab,.ws_newline").forEach((el) => {
-    if (enabled) {
-      el.classList.add("ws_vis");
-    } else {
-      el.classList.remove("ws_vis");
-    }
-  });
+  if (enabled && !wsOverlayActive) {
+    outputEditor.addOverlay(wsOverlay);
+    wsOverlayActive = true;
+  } else if (!enabled && wsOverlayActive) {
+    outputEditor.removeOverlay(wsOverlay);
+    wsOverlayActive = false;
+  }
 }
 
 async function jsonFetch(url, payload) {
@@ -194,9 +209,7 @@ async function renderTemplate(showSuccessStatus) {
   const shouldShowStatus = showSuccessStatus !== false;
   try {
     const data = await jsonFetch("/api/render", currentPayload());
-    const pre = document.getElementById("render_results");
-    pre.innerHTML = "";
-    pre.append(classifyWhitespaces(data.render_result || ""));
+    outputEditor.setValue(data.render_result || "");
     applyWhitespaceToggle();
     if (shouldShowStatus) {
       setStatus("Rendered template.", false);
@@ -252,8 +265,10 @@ async function loadShare(token) {
 
   try {
     const payload = await jsonFetch(`/api/share/${token}`);
-    document.getElementById("j2_template").value = payload.template || "";
-    document.getElementById("j2_data").value = payload.data || "";
+    templateEditor.setValue(payload.template || "");
+    templateEditor.refresh();
+    dataEditor.setValue(payload.data || "");
+    dataEditor.refresh();
 
     const target = document.querySelector(`input[name='render_mode'][value='${payload.render_mode}']`);
     if (target) {
@@ -279,12 +294,12 @@ async function loadShare(token) {
 }
 
 function clearRender() {
-  document.getElementById("render_results").textContent = "";
+  outputEditor.setValue("");
   setStatus("Render output cleared.", false);
 }
 
 async function copyRender() {
-  const text = document.getElementById("render_results").innerText || "";
+  const text = outputEditor.getValue() || "";
   if (!text) {
     setStatus("Nothing to copy yet.", true);
     return;
@@ -325,4 +340,5 @@ document.getElementById("toggle_whitespaces").addEventListener("change", applyWh
 document.getElementById("theme_toggle").addEventListener("click", toggleTheme);
 
 initTheme();
+initEditors();
 loadShare(window.__INITIAL_SHARE_TOKEN__);
