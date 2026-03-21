@@ -6,6 +6,9 @@
   <title>YAJR - Yet Another Jinja Renderer</title>
   <link rel="icon" href="/static/favicon.svg?v={{ asset_version }}" type="image/svg+xml" />
   <link rel="preload" href="/static/css/site.css?v={{ asset_version }}" as="style" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css" crossorigin="anonymous" />
   <link rel="stylesheet" href="/static/css/site.css?v={{ asset_version }}" />
 </head>
 <body data-theme="dark">
@@ -15,7 +18,7 @@
         <h1><a class="brand-link" href="/">YAJR</a></h1>
         <button id="theme_toggle" type="button" class="theme-toggle-btn" aria-pressed="true">Dark mode</button>
       </div>
-      <p>Yet Another Jinja Renderer. Shareable links for experiments. Do not put anything sensitive in templates or input data.</p>
+      <p>Yet Another Jinja Renderer, with shareable short links. Do not put anything sensitive in templates or input data.</p>
       <p class="runtime-meta">Runtime support: Ansible {{ ansible_version }} · Salt {{ salt_version }}</p>
     </header>
 
@@ -60,7 +63,7 @@
           <label class="show-ws"><input type="checkbox" id="toggle_whitespaces" /> Show whitespaces <span class="help-tip" data-tooltip="Visualizes spaces, tabs, and newlines in the rendered output.">?</span></label>
         </div>
 
-        <pre id="render_results"></pre>
+        <div id="render_results"></div>
 
         <div class="actions">
           <button id="load_defaults" type="button">Load defaults</button>
@@ -84,12 +87,17 @@
       <a href="https://github.com/wbollock/yajr" target="_blank" rel="noopener noreferrer">
         Enjoying YAJR? Give it a star on GitHub.
       </a>
+      <span class="footer-sep">·</span>
+      Inspired by <a href="https://j2live.ttl255.com/" target="_blank" rel="noopener noreferrer">j2live</a> and <a href="http://jinja.quantprogramming.com/" target="_blank" rel="noopener noreferrer">Jinja Live Parser</a>
     </footer>
   </div>
 
   <script>
     window.__INITIAL_SHARE_TOKEN__ = "{{ initial_token }}";
   </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/jinja2/jinja2.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js" crossorigin="anonymous"></script>
   <script src="/static/js/app.js?v={{ asset_version }}"></script>
 </body>
 </html>
