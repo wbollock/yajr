@@ -9,6 +9,10 @@ def parse_data_blob(data_blob: str) -> Dict[str, Any]:
     if not data_blob.strip():
         return {}
 
+    # YAML forbids tab characters for indentation; expand to spaces so
+    # tab-indented input (common from editors/copy-paste) parses correctly.
+    data_blob = data_blob.expandtabs(4)
+
     try:
         loaded = json.loads(data_blob)
     except json.JSONDecodeError:

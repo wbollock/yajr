@@ -64,6 +64,23 @@ def test_render_rejects_oversized_template():
     assert response.status_code == 422
 
 
+def test_render_endpoint_accepts_tab_indented_yaml():
+    """Tab-indented YAML data must render successfully via the web API."""
+    client = TestClient(create_app(secret="test-secret"))
+    response = client.post(
+        "/api/render",
+        json={
+            "template": "{{ secret.token }}",
+            "data": "secret:\n\ttoken: abc",
+            "render_mode": "base",
+            "options": {"strict": False, "trim": False, "lstrip": False},
+            "filters": [],
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["render_result"] == "abc"
+
+
 def test_render_rejects_oversized_data():
     client = TestClient(create_app(secret="test-secret"))
     response = client.post(
