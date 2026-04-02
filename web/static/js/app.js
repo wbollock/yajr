@@ -27,6 +27,18 @@ function initEditors() {
     theme,
     lineNumbers: true,
     lineWrapping: true,
+    indentWithTabs: false,
+    tabSize: 4,
+    extraKeys: { Tab: "insertSoftTab" },
+  });
+  // Convert tabs to spaces on paste so YAML indentation is never broken
+  // by tab characters (YAML forbids tabs for indentation).
+  dataEditor.on("beforeChange", function(cm, change) {
+    if (change.origin === "paste") {
+      change.text = change.text.map(function(line) {
+        return line.replace(/\t/g, "    ");
+      });
+    }
   });
 
   outputEditor = CodeMirror(document.getElementById("render_results"), {
