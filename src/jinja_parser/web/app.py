@@ -67,10 +67,11 @@ def _client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
-def create_app(secret: Optional[str] = None) -> FastAPI:
+def create_app(secret: Optional[str] = None, share_db: Optional[str] = None) -> FastAPI:
     app = FastAPI(title="YAJR")
     engine = RenderEngine()
-    share_store = ShareStore()
+    db_path = share_db if share_db is not None else os.environ.get("YAJR_SHARE_DB", ":memory:")
+    share_store = ShareStore(db_path=db_path)
     stats: Counter = Counter()
     root = Path(__file__).resolve().parents[3]
     static_dir = root / "web" / "static"
