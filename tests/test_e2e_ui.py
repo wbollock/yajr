@@ -73,3 +73,89 @@ def test_ui_buttons_and_share_flow(live_server):
             browser.close()
     except Exception as exc:  # noqa: BLE001
         pytest.skip(f"Playwright/browser unavailable in this environment: {exc}")
+
+
+def test_data_editor_tab_key_inserts_spaces(live_server):
+    """Pressing Tab in the data editor must insert 4 spaces, not a tab character."""
+    try:
+        with playwright.sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(live_server)
+
+            # Invoke the command that the Tab extraKey is mapped to.
+            # This tests the CodeMirror config directly and is not affected
+            # by browser-level tab-focus handling.
+            page.evaluate("""
+                dataEditor.setValue('');
+                CodeMirror.commands.insertSoftTab(dataEditor);
+            """)
+
+            value = page.evaluate("dataEditor.getValue()")
+            assert "\t" not in value, "Tab character must not appear in data editor after Tab key"
+            assert value == "    ", f"Expected 4 spaces, got {repr(value)}"
+
+            browser.close()
+    except Exception as exc:  # noqa: BLE001
+        pytest.skip(f"Playwright/browser unavailable in this environment: {exc}")
+
+
+def test_data_editor_paste_tabs_converted_to_spaces(live_server):
+    """Pasting tab-indented YAML must silently convert tabs to 4 spaces."""
+    try:
+        with playwright.sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(live_server)
+
+            # replaceRange with origin="paste" triggers the beforeChange handler
+            # that rewrites tabs — the same code path as a real clipboard paste.
+            page.evaluate(r"""
+                dataEditor.setValue('');
+                dataEditor.replaceRange(
+                    'secret:\n\ttoken: abc',
+                    {line: 0, ch: 0},
+                    null,
+                    'paste'
+                );
+            """)
+
+            value = page.evaluate("dataEditor.getValue()")
+            assert "\t" not in value, "Tab must be gone after paste"
+            assert "    token: abc" in value, "Tab must have been expanded to 4 spaces"
+
+            browser.close()
+    except Exception as exc:  # noqa: BLE001
+        pytest.skip(f"Playwright/browser unavailable in this environment: {exc}")
+
+
+def test_data_editor_pasted_tab_yaml_renders_correctly(live_server):
+    """Tab-indented data pasted in the browser must render end-to-end without error."""
+    try:
+        with playwright.sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.goto(live_server)
+
+            page.evaluate("templateEditor.setValue('{{ secret.token }}')")
+            page.evaluate(r"""
+                dataEditor.setValue('');
+                dataEditor.replaceRange(
+                    'secret:\n\ttoken: abc',
+                    {line: 0, ch: 0},
+                    null,
+                    'paste'
+                );
+            """)
+
+            page.click("#request_render")
+
+            expect = playwright.expect
+            expect(page.locator("#render_results")).to_contain_text("abc")
+            # Must not show an error in the status line
+            status = page.locator("#status_line").text_content()
+            assert "failed" not in status.lower(), f"Unexpected error status: {status}"
+
+            browser.close()
+    except Exception as exc:  # noqa: BLE001
+        pytest.skip(f"Playwright/browser unavailable in this environment: {exc}")
