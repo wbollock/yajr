@@ -26,6 +26,13 @@ def test_parse_yaml_tab_indented_mapping():
     assert parse_data_blob(data) == {"secret": {"token": "abc"}}
 
 
+def test_parse_yaml_space_then_tab_indentation():
+    # A leading space followed by a tab (" \t") must also be expanded —
+    # this was the case that the original ^(\t+) regex missed.
+    data = "secret:\n \ttoken: abc"
+    assert parse_data_blob(data) == {"secret": {"token": "abc"}}
+
+
 def test_parse_yaml_nested_tab_indentation():
     data = "a:\n\tb:\n\t\tc: 1"
     assert parse_data_blob(data) == {"a": {"b": {"c": 1}}}

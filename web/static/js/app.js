@@ -284,7 +284,7 @@ async function loadShare(token) {
     const payload = await jsonFetch(`/api/share/${token}`);
     templateEditor.setValue(payload.template || "");
     templateEditor.refresh();
-    dataEditor.setValue(payload.data || "");
+    dataEditor.setValue((payload.data || "").replace(/\t/g, "    "));
     dataEditor.refresh();
 
     const target = document.querySelector(`input[name='render_mode'][value='${payload.render_mode}']`);
