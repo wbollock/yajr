@@ -95,7 +95,10 @@ def create_app(secret: Optional[str] = None, share_db: Optional[str] = None) -> 
     def render(payload: RenderPayload, request: Request) -> Dict[str, str]:
         stats["renders"] += 1
         log.info("render ip=%s mode=%s", _client_ip(request), payload.render_mode)
-        return {"render_result": engine.render(payload.to_request())}
+        try:
+            return {"render_result": engine.render(payload.to_request())}
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     @app.post("/api/share")
     def share(payload: RenderPayload, request: Request) -> Dict[str, str]:

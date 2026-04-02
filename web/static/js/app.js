@@ -209,7 +209,12 @@ async function jsonFetch(url, payload) {
     body: payload ? JSON.stringify(payload) : undefined,
   });
 
-  const data = await response.json();
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error(`Server error (${response.status})`);
+  }
   if (!response.ok) {
     const detail = data.detail || "Request failed.";
     throw new Error(detail);

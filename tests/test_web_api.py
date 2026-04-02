@@ -98,9 +98,9 @@ def test_render_strict_mode_reports_undefined_variable():
     assert "Rendering error" in response.json()["render_result"]
 
 
-def test_render_invalid_yaml_data_returns_500():
-    """Malformed data that is neither JSON nor YAML causes a 500 from the API."""
-    client = TestClient(create_app(secret="test-secret"), raise_server_exceptions=False)
+def test_render_invalid_yaml_data_returns_422():
+    """Malformed data that is neither JSON nor YAML returns 422 with a JSON detail message."""
+    client = TestClient(create_app(secret="test-secret"))
     response = client.post(
         "/api/render",
         json={
@@ -111,7 +111,26 @@ def test_render_invalid_yaml_data_returns_500():
             "filters": [],
         },
     )
-    assert response.status_code == 500
+    assert response.status_code == 422
+    assert "detail" in response.json()
+
+
+def test_render_inconsistent_yaml_indentation_returns_422():
+    """YAML with inconsistent indentation returns 422, not a raw 500 that breaks the browser."""
+    client = TestClient(create_app(secret="test-secret"))
+    data = "secret:\n    linode_token: \"123\"\n     region: \"us-east-1\""
+    response = client.post(
+        "/api/render",
+        json={
+            "template": "{{ secret.linode_token }}",
+            "data": data,
+            "render_mode": "base",
+            "options": {"strict": False, "trim": False, "lstrip": False},
+            "filters": [],
+        },
+    )
+    assert response.status_code == 422
+    assert "detail" in response.json()
 
 
 def test_render_rejects_oversized_data():
