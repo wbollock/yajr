@@ -21,7 +21,7 @@ charset-normalizer==3.4.4
     # via requests
 click==8.1.8
     # via uvicorn
-cryptography==46.0.5
+cryptography==46.0.6
     # via ansible-core
 distro==1.9.0
     # via jinja-parser (pyproject.toml)
