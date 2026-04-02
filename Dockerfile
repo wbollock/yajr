@@ -17,7 +17,11 @@ RUN pip install --no-cache-dir -r requirements.lock.txt
 COPY src /app/src
 COPY web /app/web
 
+RUN mkdir -p /data && chown app:app /data
+
 USER app
+
+VOLUME /data
 
 EXPOSE 8000
 
