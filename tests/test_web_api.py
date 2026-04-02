@@ -81,6 +81,39 @@ def test_render_endpoint_accepts_tab_indented_yaml():
     assert response.json()["render_result"] == "abc"
 
 
+def test_render_strict_mode_reports_undefined_variable():
+    """strict mode with an undefined variable returns 200 with an error string in the result."""
+    client = TestClient(create_app(secret="test-secret"))
+    response = client.post(
+        "/api/render",
+        json={
+            "template": "{{ missing }}",
+            "data": "x: 1",
+            "render_mode": "base",
+            "options": {"strict": True, "trim": False, "lstrip": False},
+            "filters": [],
+        },
+    )
+    assert response.status_code == 200
+    assert "Rendering error" in response.json()["render_result"]
+
+
+def test_render_invalid_yaml_data_returns_500():
+    """Malformed data that is neither JSON nor YAML causes a 500 from the API."""
+    client = TestClient(create_app(secret="test-secret"), raise_server_exceptions=False)
+    response = client.post(
+        "/api/render",
+        json={
+            "template": "{{ x }}",
+            "data": "{unclosed: brace",
+            "render_mode": "base",
+            "options": {"strict": False, "trim": False, "lstrip": False},
+            "filters": [],
+        },
+    )
+    assert response.status_code == 500
+
+
 def test_render_rejects_oversized_data():
     client = TestClient(create_app(secret="test-secret"))
     response = client.post(

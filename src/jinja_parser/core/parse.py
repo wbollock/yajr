@@ -1,7 +1,10 @@
 import json
+import re
 from typing import Any, Dict
 
 import yaml
+
+_LEADING_TABS = re.compile(r"^(\t+)", re.MULTILINE)
 
 
 def parse_data_blob(data_blob: str) -> Dict[str, Any]:
@@ -9,9 +12,11 @@ def parse_data_blob(data_blob: str) -> Dict[str, Any]:
     if not data_blob.strip():
         return {}
 
-    # YAML forbids tab characters for indentation; expand to spaces so
-    # tab-indented input (common from editors/copy-paste) parses correctly.
-    data_blob = data_blob.expandtabs(4)
+    # YAML forbids tab characters for indentation; replace leading tabs on
+    # each line with spaces so tab-indented input parses correctly.
+    # Only leading tabs are replaced so mid-line tabs (e.g. inside JSON string
+    # values) are left intact.
+    data_blob = _LEADING_TABS.sub(lambda m: "    " * len(m.group(1)), data_blob)
 
     try:
         loaded = json.loads(data_blob)
