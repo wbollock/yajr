@@ -6,9 +6,9 @@
   <title>YAJR - Yet Another Jinja Renderer</title>
   <link rel="icon" href="/static/favicon.svg?v={{ asset_version }}" type="image/svg+xml" />
   <link rel="preload" href="/static/css/site.css?v={{ asset_version }}" as="style" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" crossorigin="anonymous" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css" crossorigin="anonymous" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="/static/vendor/codemirror/codemirror.min.css" />
+  <link rel="stylesheet" href="/static/vendor/codemirror/theme/dracula.min.css" />
+  <link rel="stylesheet" href="/static/vendor/codemirror/theme/eclipse.min.css" />
   <link rel="stylesheet" href="/static/css/site.css?v={{ asset_version }}" />
 </head>
 <body data-theme="dark">
@@ -98,9 +98,9 @@
   <script>
     window.__INITIAL_SHARE_TOKEN__ = "{{ initial_token }}";
   </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/jinja2/jinja2.min.js" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js" crossorigin="anonymous"></script>
+  <script src="/static/vendor/codemirror/codemirror.min.js"></script>
+  <script src="/static/vendor/codemirror/mode/jinja2/jinja2.min.js"></script>
+  <script src="/static/vendor/codemirror/mode/yaml/yaml.min.js"></script>
   <script src="/static/js/app.js?v={{ asset_version }}"></script>
 </body>
 </html>
