@@ -11,19 +11,78 @@ const wsOverlay = {
 };
 let wsOverlayActive = false;
 
+// CodeMirror 5 misidentifies apostrophes inside YAML-style comments as string
+// delimiters (e.g. "job's" turns everything yellow). This factory wraps any
+// mode with a fix: when a line's first non-whitespace char is '#', consume the
+// whole line as "comment" and restore the inner mode's state to the snapshot
+// taken at the start of that line so the apostrophe never poisons future lines.
+function makeCommentFixedMode(innerModeName) {
+  CodeMirror.defineMode(innerModeName + "-comment-fixed", function(config) {
+    const inner = CodeMirror.getMode(config, innerModeName);
+    return {
+      startState: function() {
+        return {
+          inner: CodeMirror.startState(inner),
+          solState: null,
+          lineIsComment: false,
+          inLineComment: false,
+        };
+      },
+      copyState: function(state) {
+        return {
+          inner: CodeMirror.copyState(inner, state.inner),
+          solState: state.solState ? CodeMirror.copyState(inner, state.solState) : null,
+          lineIsComment: state.lineIsComment,
+          inLineComment: state.inLineComment,
+        };
+      },
+      token: function(stream, state) {
+        if (stream.sol()) {
+          state.solState = CodeMirror.copyState(inner, state.inner);
+          const startPos = stream.pos;
+          stream.eatSpace();
+          state.lineIsComment = (stream.peek() === "#");
+          stream.pos = startPos;
+          state.inLineComment = false;
+        }
+        if (state.lineIsComment || state.inLineComment) {
+          if (state.lineIsComment) {
+            state.inner = CodeMirror.copyState(inner, state.solState);
+          }
+          stream.skipToEnd();
+          return "comment";
+        }
+        const tok = inner.token(stream, state.inner);
+        if (tok === "comment") {
+          state.inLineComment = true;
+        }
+        return tok;
+      },
+      indent: inner.indent ? function(state, textAfter) {
+        return inner.indent(state.inner, textAfter);
+      } : null,
+      electricChars: inner.electricChars,
+      lineComment: "#",
+    };
+  });
+}
+
+makeCommentFixedMode("yaml");
+makeCommentFixedMode("jinja2");
+
 function initEditors() {
   const isDark = document.body.getAttribute("data-theme") !== "light";
   const theme = isDark ? "dracula" : "eclipse";
 
   templateEditor = CodeMirror.fromTextArea(document.getElementById("j2_template"), {
-    mode: "jinja2",
+    mode: "jinja2-comment-fixed",
     theme,
     lineNumbers: true,
     lineWrapping: true,
     autofocus: false,
   });
   dataEditor = CodeMirror.fromTextArea(document.getElementById("j2_data"), {
-    mode: "yaml",
+    mode: "yaml-comment-fixed",
     theme,
     lineNumbers: true,
     lineWrapping: true,
@@ -303,8 +362,7 @@ async function loadShare(token) {
       el.checked = activeFilters.includes(key);
     });
 
-    await renderTemplate(false);
-    setStatus("Loaded shared template and rendered output.", false);
+    setStatus("Loaded shared template — click Render to execute.", false);
   } catch (error) {
     setStatus(`Could not load share link: ${error.message}`, true);
   }

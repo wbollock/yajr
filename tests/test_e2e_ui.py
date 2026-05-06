@@ -65,6 +65,15 @@ def test_ui_buttons_and_share_flow(live_server):
             expect(page.locator("#render_results")).to_have_text("")
 
             page.goto(share_url)
+            # Share links must NOT auto-render; editors are populated but
+            # results stay empty until the user explicitly clicks Render.
+            expect(page.locator("#render_results")).to_have_text("")
+            status_text = page.locator("#status_line").text_content() or ""
+            assert "click render" in status_text.lower(), (
+                f"Expected 'click render' prompt in status, got: {status_text!r}"
+            )
+            # Explicitly render and confirm the output appears.
+            page.click("#request_render")
             expect(page.locator("#render_results")).to_contain_text("interface Ethernet1")
 
             page.click("#theme_toggle")
