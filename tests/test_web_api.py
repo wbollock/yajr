@@ -4,7 +4,7 @@ from jinja_parser.web.app import MAX_DATA_CHARS, MAX_TEMPLATE_CHARS, create_app
 
 
 def test_render_endpoint_works():
-    client = TestClient(create_app(secret="test-secret"))
+    client = TestClient(create_app())
     response = client.post(
         "/api/render",
         json={
@@ -21,7 +21,7 @@ def test_render_endpoint_works():
 
 
 def test_share_endpoint_roundtrip_short_slug():
-    client = TestClient(create_app(secret="test-secret"))
+    client = TestClient(create_app())
     payload = {
         "template": "{{ x }}",
         "data": "x: 7",
@@ -43,14 +43,14 @@ def test_share_endpoint_roundtrip_short_slug():
 
 
 def test_index_contains_runtime_versions_label():
-    client = TestClient(create_app(secret="test-secret"))
+    client = TestClient(create_app())
     response = client.get("/")
     assert response.status_code == 200
     assert "Runtime support" in response.text
 
 
 def test_render_rejects_oversized_template():
-    client = TestClient(create_app(secret="test-secret"))
+    client = TestClient(create_app())
     response = client.post(
         "/api/render",
         json={
@@ -66,7 +66,7 @@ def test_render_rejects_oversized_template():
 
 def test_render_endpoint_accepts_tab_indented_yaml():
     """Tab-indented YAML data must render successfully via the web API."""
-    client = TestClient(create_app(secret="test-secret"))
+    client = TestClient(create_app())
     response = client.post(
         "/api/render",
         json={
@@ -83,7 +83,7 @@ def test_render_endpoint_accepts_tab_indented_yaml():
 
 def test_render_strict_mode_reports_undefined_variable():
     """strict mode with an undefined variable returns 200 with an error string in the result."""
-    client = TestClient(create_app(secret="test-secret"))
+    client = TestClient(create_app())
     response = client.post(
         "/api/render",
         json={
@@ -100,7 +100,7 @@ def test_render_strict_mode_reports_undefined_variable():
 
 def test_render_invalid_yaml_data_returns_422():
     """Malformed data that is neither JSON nor YAML returns 422 with a JSON detail message."""
-    client = TestClient(create_app(secret="test-secret"))
+    client = TestClient(create_app())
     response = client.post(
         "/api/render",
         json={
@@ -117,7 +117,7 @@ def test_render_invalid_yaml_data_returns_422():
 
 def test_render_inconsistent_yaml_indentation_returns_422():
     """YAML with inconsistent indentation returns 422, not a raw 500 that breaks the browser."""
-    client = TestClient(create_app(secret="test-secret"))
+    client = TestClient(create_app())
     data = "secret:\n    linode_token: \"123\"\n     region: \"us-east-1\""
     response = client.post(
         "/api/render",
@@ -134,7 +134,7 @@ def test_render_inconsistent_yaml_indentation_returns_422():
 
 
 def test_render_rejects_oversized_data():
-    client = TestClient(create_app(secret="test-secret"))
+    client = TestClient(create_app())
     response = client.post(
         "/api/render",
         json={

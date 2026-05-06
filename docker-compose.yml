@@ -8,7 +8,6 @@ services:
     ports:
       - "8000:8000"
     environment:
-      JINJA_SHARE_SECRET: ${JINJA_SHARE_SECRET}
       YAJR_SHARE_DB: /data/shares.db
       ANSIBLE_LOCAL_TEMP: /tmp/.ansible/tmp
       ANSIBLE_REMOTE_TEMP: /tmp/.ansible/tmp
