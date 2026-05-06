@@ -156,6 +156,32 @@ function initSplitter() {
   });
 }
 
+function initWorkspaceResize() {
+  const workspace = document.querySelector(".workspace");
+  if (!workspace || typeof ResizeObserver === "undefined") return;
+
+  const STORAGE_KEY = "yajr_workspace_height";
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) workspace.style.height = saved;
+
+  let saveTimer;
+  let firstObservation = true;
+  new ResizeObserver(function() {
+    [templateEditor, dataEditor, outputEditor].forEach(function(ed) {
+      if (ed) ed.refresh();
+    });
+    if (firstObservation) {
+      firstObservation = false;
+      return;
+    }
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function() {
+      const h = workspace.style.height;
+      if (h) localStorage.setItem(STORAGE_KEY, h);
+    }, 250);
+  }).observe(workspace);
+}
+
 function statusLine() {
   return document.getElementById("status_line");
 }
@@ -463,4 +489,5 @@ document.getElementById("theme_toggle").addEventListener("click", toggleTheme);
 initTheme();
 initEditors();
 initSplitter();
+initWorkspaceResize();
 loadShare(window.__INITIAL_SHARE_TOKEN__);
