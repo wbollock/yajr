@@ -103,9 +103,32 @@ body {
 
 .workspace {
   display: grid;
-  gap: 16px;
-  grid-template-columns: minmax(640px, 1.25fr) minmax(420px, 1fr);
+  gap: 0;
+  grid-template-columns: var(--split-left, 700px) 10px 1fr;
   align-items: stretch;
+}
+
+.splitter {
+  cursor: col-resize;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.splitter::after {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 48px;
+  background: var(--line);
+  border-radius: 2px;
+  transition: background 120ms;
+}
+
+.splitter:hover::after,
+.splitter.dragging::after {
+  background: var(--accent);
 }
 
 .footer-note {
@@ -352,6 +375,10 @@ button:hover {
     grid-template-columns: 1fr;
   }
 
+  .splitter {
+    display: none;
+  }
+
   .actions {
     grid-template-columns: 1fr 1fr;
   }
@@ -365,6 +392,12 @@ button:hover {
   border-radius: 9px;
   height: auto;
   min-height: 182px;
+}
+
+/* Allow users to drag-resize the input editors vertically. */
+.input-block .CodeMirror {
+  resize: vertical;
+  min-height: 160px;
 }
 
 /* Right panel: flex column so output editor fills available height */

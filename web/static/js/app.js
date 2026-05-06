@@ -70,6 +70,13 @@ function makeCommentFixedMode(innerModeName) {
 makeCommentFixedMode("yaml");
 makeCommentFixedMode("jinja2");
 
+function makeResizable(editor) {
+  const cm = editor.getWrapperElement();
+  if (typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(function() { editor.refresh(); }).observe(cm);
+  }
+}
+
 function initEditors() {
   const isDark = document.body.getAttribute("data-theme") !== "light";
   const theme = isDark ? "dracula" : "eclipse";
@@ -81,6 +88,8 @@ function initEditors() {
     lineWrapping: true,
     autofocus: false,
   });
+  makeResizable(templateEditor);
+
   dataEditor = CodeMirror.fromTextArea(document.getElementById("j2_data"), {
     mode: "yaml-comment-fixed",
     theme,
@@ -90,6 +99,7 @@ function initEditors() {
     tabSize: 4,
     extraKeys: { Tab: "insertSoftTab" },
   });
+  makeResizable(dataEditor);
   // Convert tabs to spaces on paste so YAML indentation is never broken
   // by tab characters (YAML forbids tabs for indentation).
   dataEditor.on("beforeChange", function(cm, change) {
@@ -108,6 +118,42 @@ function initEditors() {
     readOnly: true,
   });
   outputEditor.setSize(null, "100%");
+}
+
+function initSplitter() {
+  const workspace = document.querySelector(".workspace");
+  const splitter = document.getElementById("panel_splitter");
+  if (!workspace || !splitter) return;
+
+  const STORAGE_KEY = "yajr_split_left";
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) workspace.style.setProperty("--split-left", saved);
+
+  let dragging = false;
+
+  splitter.addEventListener("mousedown", function(e) {
+    e.preventDefault();
+    dragging = true;
+    splitter.classList.add("dragging");
+  });
+
+  document.addEventListener("mousemove", function(e) {
+    if (!dragging) return;
+    const rect = workspace.getBoundingClientRect();
+    const newLeft = Math.max(280, Math.min(e.clientX - rect.left, rect.width - 290));
+    const val = newLeft + "px";
+    workspace.style.setProperty("--split-left", val);
+    [templateEditor, dataEditor, outputEditor].forEach(function(ed) {
+      if (ed) ed.refresh();
+    });
+  });
+
+  document.addEventListener("mouseup", function() {
+    if (!dragging) return;
+    dragging = false;
+    splitter.classList.remove("dragging");
+    localStorage.setItem(STORAGE_KEY, getComputedStyle(workspace).getPropertyValue("--split-left").trim());
+  });
 }
 
 function statusLine() {
@@ -416,4 +462,5 @@ document.getElementById("theme_toggle").addEventListener("click", toggleTheme);
 
 initTheme();
 initEditors();
+initSplitter();
 loadShare(window.__INITIAL_SHARE_TOKEN__);
