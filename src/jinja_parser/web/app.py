@@ -161,6 +161,17 @@ def create_app(share_db: Optional[str] = None) -> FastAPI:
             raise HTTPException(status_code=403, detail="Stats are only available from localhost.")
         return dict(stats)
 
+    @app.get("/stats", response_class=HTMLResponse)
+    def stats_page(request: Request):
+        ip = _client_ip(request)
+        if ip not in _LOCALHOST_IPS:
+            raise HTTPException(status_code=403, detail="Stats are only available from localhost.")
+        return templates.TemplateResponse(
+            request,
+            "stats.html",
+            {"request": request, "stats": dict(stats), "yajr_version": _app_version()},
+        )
+
     def _base_context(request: Request, initial_token: str) -> Dict[str, object]:
         return {
             "request": request,

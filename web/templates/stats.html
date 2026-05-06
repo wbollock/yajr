@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YAJR — Stats</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/static/css/site.css" />
+  <style>
+    .stats-shell { max-width: 520px; margin: 60px auto; padding: 28px; }
+    .stats-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      padding: 24px 28px;
+    }
+    .stats-card h2 { margin: 0 0 20px; font-size: 1.3rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+    th { color: var(--muted); font-weight: 600; }
+    td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+    tr:last-child th, tr:last-child td { border-bottom: none; }
+    .back-link { display: block; margin-top: 18px; font-size: 0.9rem; color: var(--muted); text-decoration: none; }
+    .back-link:hover { color: var(--accent); }
+    .meta { margin-top: 14px; font-size: 0.82rem; color: var(--muted); }
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="stats-shell">
+    <div class="stats-card">
+      <h2>YAJR stats</h2>
+      <table>
+        <thead>
+          <tr><th>Metric</th><th>Count</th></tr>
+        </thead>
+        <tbody>
+          {% for key, value in stats.items() %}
+          <tr><th>{{ key }}</th><td>{{ value }}</td></tr>
+          {% else %}
+          <tr><td colspan="2" style="color:var(--muted)">No data yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="meta">v{{ yajr_version }} · counters reset on each restart</p>
+    </div>
+    <a class="back-link" href="/">← Back to renderer</a>
+  </div>
+</body>
+</html>
