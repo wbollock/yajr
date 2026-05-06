@@ -1,6 +1,10 @@
+import dataclasses
 import hashlib
 import ipaddress
+import json
 import os
+import subprocess
+import sys
 import tempfile
 from typing import Any, Dict, List
 
@@ -10,9 +14,45 @@ from jinja2.sandbox import SandboxedEnvironment
 from .models import RenderRequest
 from .parse import parse_data_blob
 
+_WORKER_TIMEOUT_SECS = int(os.environ.get("YAJR_WORKER_TIMEOUT", "8"))
+
 
 class RenderEngine:
     def render(self, request: RenderRequest) -> str:
+        """Render in a sandboxed subprocess with hard resource limits."""
+        payload = json.dumps(dataclasses.asdict(request)).encode()
+        try:
+            proc = subprocess.run(
+                [sys.executable, "-m", "jinja_parser.core.worker"],
+                input=payload,
+                capture_output=True,
+                timeout=_WORKER_TIMEOUT_SECS,
+            )
+        except subprocess.TimeoutExpired:
+            return (
+                f"Rendering error:\n\nTimed out (render exceeded "
+                f"{_WORKER_TIMEOUT_SECS} seconds)."
+            )
+
+        if proc.returncode != 0:
+            stderr = proc.stderr.decode("utf-8", errors="replace").strip()
+            return (
+                f"Rendering error:\n\n"
+                f"{stderr or 'Worker process exited unexpectedly.'}"
+            )
+
+        try:
+            data = json.loads(proc.stdout)
+            if data.get("error_type") == "ValueError":
+                raise ValueError(data["result"])
+            return data.get("result", "")
+        except ValueError:
+            raise
+        except (json.JSONDecodeError, AttributeError, KeyError):
+            return "Rendering error:\n\nWorker returned invalid output."
+
+    def _render_direct(self, request: RenderRequest) -> str:
+        """Run rendering in the current process.  Called only from worker.py."""
         mode = request.normalized_mode()
         if mode not in {"base", "ansible", "salt"}:
             raise ValueError(f"Unknown render mode: {request.render_mode}")
@@ -112,6 +152,10 @@ class RenderEngine:
             opts = {
                 "cachedir": cachedir,
                 "file_client": "local",
+                # Point salt:// and pillar:// at the empty cachedir so
+                # include/load_yaml/cp.get_file_str cannot read the host FS.
+                "file_roots": {"base": [cachedir]},
+                "pillar_roots": {"base": [cachedir]},
                 "renderer": "jinja|yaml",
                 "id": "jparser",
                 "allow_undefined": not strict,
