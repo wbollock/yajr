@@ -36,9 +36,16 @@ class ShareStore:
         )
         self._conn.commit()
 
+    _MAX_AGE_SECS = 30 * 24 * 60 * 60  # 30 days
+
     def create(self, req: RenderRequest) -> str:
         payload = json.dumps(asdict(req))
         with self._lock:
+            # Purge entries older than 30 days first.
+            self._conn.execute(
+                "DELETE FROM shares WHERE created_at < strftime('%s', 'now') - ?",
+                (self._MAX_AGE_SECS,),
+            )
             count = self._conn.execute("SELECT COUNT(*) FROM shares").fetchone()[0]
             if count >= self._max_entries:
                 self._conn.execute(

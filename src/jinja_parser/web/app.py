@@ -1,9 +1,11 @@
 import logging
+import time
 import tomllib
 import os
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import asdict
 from pathlib import Path
+from threading import Lock
 from typing import Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, Request
@@ -24,6 +26,30 @@ log = logging.getLogger("yajr")
 
 MAX_TEMPLATE_CHARS = 200_000
 MAX_DATA_CHARS = 200_000
+
+_LOCALHOST_IPS = {"127.0.0.1", "::1", "localhost"}
+
+
+class _RateLimiter:
+    """Simple in-memory sliding-window rate limiter.
+
+    Not suitable for multi-process deployments — use Redis-backed
+    middleware if running multiple uvicorn workers.
+    """
+
+    def __init__(self) -> None:
+        self._buckets: defaultdict = defaultdict(list)
+        self._lock = Lock()
+
+    def is_allowed(self, key: str, limit: int, window_secs: int) -> bool:
+        now = time.monotonic()
+        with self._lock:
+            ts = self._buckets[key]
+            ts[:] = [t for t in ts if now - t < window_secs]
+            if len(ts) >= limit:
+                return False
+            ts.append(now)
+            return True
 
 
 class RenderPayload(BaseModel):
@@ -61,10 +87,14 @@ def _runtime_version(pkg_name: str) -> str:
 
 
 def _client_ip(request: Request) -> str:
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else "unknown"
+    trusted_proxies_raw = os.environ.get("YAJR_TRUSTED_PROXIES", "")
+    trusted = {p.strip() for p in trusted_proxies_raw.split(",") if p.strip()}
+    client_host = request.client.host if request.client else ""
+    if trusted and client_host in trusted:
+        forwarded = request.headers.get("x-forwarded-for")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
+    return client_host or "unknown"
 
 
 def create_app(share_db: Optional[str] = None) -> FastAPI:
@@ -73,6 +103,7 @@ def create_app(share_db: Optional[str] = None) -> FastAPI:
     db_path = share_db if share_db is not None else os.environ.get("YAJR_SHARE_DB", ":memory:")
     share_store = ShareStore(db_path=db_path)
     stats: Counter = Counter()
+    limiter = _RateLimiter()
     root = Path(__file__).resolve().parents[3]
     static_dir = root / "web" / "static"
     template_dir = root / "web" / "templates"
@@ -93,8 +124,11 @@ def create_app(share_db: Optional[str] = None) -> FastAPI:
 
     @app.post("/api/render")
     def render(payload: RenderPayload, request: Request) -> Dict[str, str]:
+        ip = _client_ip(request)
+        if not limiter.is_allowed(f"render:{ip}", limit=30, window_secs=60):
+            raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again shortly.")
         stats["renders"] += 1
-        log.info("render ip=%s mode=%s", _client_ip(request), payload.render_mode)
+        log.info("render ip=%s mode=%s", ip, payload.render_mode)
         try:
             return {"render_result": engine.render(payload.to_request())}
         except ValueError as exc:
@@ -102,10 +136,13 @@ def create_app(share_db: Optional[str] = None) -> FastAPI:
 
     @app.post("/api/share")
     def share(payload: RenderPayload, request: Request) -> Dict[str, str]:
+        ip = _client_ip(request)
+        if not limiter.is_allowed(f"share:{ip}", limit=10, window_secs=60):
+            raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again shortly.")
         stats["shares"] += 1
         token = share_store.create(payload.to_request())
         base = str(request.base_url).rstrip("/")
-        log.info("share_create ip=%s token=%s", _client_ip(request), token)
+        log.info("share_create ip=%s token=%s", ip, token)
         return {"token": token, "share_url": f"{base}/s/{token}"}
 
     @app.get("/api/share/{token}")
@@ -118,7 +155,10 @@ def create_app(share_db: Optional[str] = None) -> FastAPI:
         return payload
 
     @app.get("/api/stats")
-    def get_stats() -> Dict[str, int]:
+    def get_stats(request: Request) -> Dict[str, int]:
+        ip = _client_ip(request)
+        if ip not in _LOCALHOST_IPS:
+            raise HTTPException(status_code=403, detail="Stats are only available from localhost.")
         return dict(stats)
 
     def _base_context(request: Request, initial_token: str) -> Dict[str, object]:
