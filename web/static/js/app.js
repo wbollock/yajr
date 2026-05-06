@@ -160,9 +160,12 @@ function initWorkspaceResize() {
   const workspace = document.querySelector(".workspace");
   if (!workspace || typeof ResizeObserver === "undefined") return;
 
-  const STORAGE_KEY = "yajr_workspace_height";
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) workspace.style.height = saved;
+  const HEIGHT_KEY = "yajr_workspace_height";
+  const WIDTH_KEY = "yajr_workspace_width";
+  const savedHeight = localStorage.getItem(HEIGHT_KEY);
+  const savedWidth = localStorage.getItem(WIDTH_KEY);
+  if (savedHeight) workspace.style.height = savedHeight;
+  if (savedWidth) workspace.style.width = savedWidth;
 
   let saveTimer;
   let firstObservation = true;
@@ -176,8 +179,8 @@ function initWorkspaceResize() {
     }
     clearTimeout(saveTimer);
     saveTimer = setTimeout(function() {
-      const h = workspace.style.height;
-      if (h) localStorage.setItem(STORAGE_KEY, h);
+      if (workspace.style.height) localStorage.setItem(HEIGHT_KEY, workspace.style.height);
+      if (workspace.style.width) localStorage.setItem(WIDTH_KEY, workspace.style.width);
     }, 250);
   }).observe(workspace);
 }

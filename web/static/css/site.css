@@ -106,9 +106,10 @@ body {
   gap: 0;
   grid-template-columns: var(--split-left, 700px) 10px 1fr;
   align-items: stretch;
-  resize: vertical;
+  resize: both;
   overflow: hidden;
   min-height: 500px;
+  min-width: 600px;
 }
 
 .splitter {
