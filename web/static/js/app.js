@@ -118,6 +118,15 @@ function initEditors() {
     readOnly: true,
   });
   outputEditor.setSize(null, "100%");
+  makeResizable(outputEditor);
+
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      [templateEditor, dataEditor, outputEditor].forEach(function(ed) {
+        if (ed) ed.refresh();
+      });
+    });
+  });
 }
 
 function initSplitter() {
