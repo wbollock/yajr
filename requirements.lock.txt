@@ -4,7 +4,7 @@ annotated-doc==0.0.4
     # via fastapi
 annotated-types==0.7.0
     # via pydantic
-ansible-core==2.16.17
+ansible-core==2.16.19rc1
     # via jinja-parser (pyproject.toml)
 anyio==4.12.1
     # via
