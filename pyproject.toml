@@ -9,7 +9,7 @@ description = "Jinja template renderer with CLI, web API, and share links"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-  "fastapi>=0.128.0,<0.129.0",
+  "fastapi>=0.128.0,<1.0.0",
   "uvicorn>=0.37.0,<0.39.0",
   "jinja2>=3.1.0",
   "PyYAML>=6.0.0",
